@@ -1,79 +1,6 @@
 
-
-///////////////////////////////////////////////////////////////////////////////
-// temperature and heating
-
-var sensornode = require('./sensornode');
-
-gTemp = {min:70, max:78};
-thermocycleState = false;
-
-function onSensorReading(msg) {
-  if (msg.data.Fahrenheit) onTempReading(msg);
-}
-
-function onTempReading(msg) {
-  var temp = msg.data.Fahrenheit.value;
-  var heaterOn = false;
-
-//  console.log(temp);
-  console.log('Fahrenheit: ' + temp);
-
-  if (thermocycleState) {
-    if (temp <= gTemp.max) {
-      heaterOn = true;
-    }
-    else if (temp >= gTemp.max) {
-      //setHeater(false);
-    }
-  }
-
-  var heaterLevel = 50;
-  console.log('thermocycleState = ' + thermocycleState);
-  console.log('heating on = ' + heaterOn);
-  arduino.analogWrite(5, heaterOn? heaterLevel: 0);
-}
-
-sensornode.init(onSensorReading);
-
 ////////////////////////////////////////////////////////////////////////////
-// // var gpio = require('rpi-gpio');
-// var relays = require('./controllers/relays');
-/*
-var serialport = require("serialport");
-var SerialPort = serialport.SerialPort;
 
-        serialPort = new SerialPort('/dev/ttyACM0', {
-          baudrate: 9600,
-          parser: serialport.parsers.readline("\n")
-        });
-
-        serialPort.on("open", function () {
-          console.log('serial port opened');
-        });
-*/
-var ArduinoFirmata = require('arduino-firmata');
-var arduino = new ArduinoFirmata();
-
-arduino.connect(); // use default arduino
-// arduino.connect('/dev/ttyACM0'); //Bone Serial
-arduino.connect('/dev/ttyACM0'); //Pi2 Serial Port Upper Left
-
-arduino.on('connect', function(){
-
-  console.log("board version"+arduino.boardVersion);
-  arduino.pinMode(3, ArduinoFirmata.OUTPUT);
-  arduino.pinMode(4, ArduinoFirmata.OUTPUT);
-  arduino.pinMode(5, ArduinoFirmata.OUTPUT);
-  arduino.pinMode(9, ArduinoFirmata.OUTPUT);
-  arduino.pinMode(10, ArduinoFirmata.OUTPUT);
-  arduino.pinMode(11, ArduinoFirmata.OUTPUT);
-
-});
-
-
-
-///////////////////////////////////////////////////////////////////////////////
 var express = require('express')
   , app = express()
   , server = require('http').createServer(app)
@@ -84,7 +11,7 @@ var express = require('express')
 
 
 // app.configure(function(){
-	app.set('port', 8088);
+	app.set('port', 8888);
   app.set('views', __dirname + '/arkview');
   app.engine('html', require('ejs').renderFile);
 	//app.set('view engine', 'jade');
@@ -122,37 +49,6 @@ var g_cronClient = null;
 
 var connections = [];
 
-// var sensa = ioc.connect('http://50.18.176.3');
-// sensa.on('connect', function(){
-//   connections.push(sensa);
-// });
-
-// sensa.on('command', function(data){
-//   if ( data.module === "lightCycle" ) {
-//         serialPort.write("C\n");
-//   // } else if (data.module === "airPump") {
-
-//   //   controllerStateObject["relay4"] = data.state;
-//   //   relays.write_value("relay4",data.state);
-
-//   }
-
-// });
-
-// gpio.setup(18, gpio.DIR_OUT, write);
-// gpio.setup(23, gpio.DIR_OUT, write);
-
-// function write(){
-//   gpio.write(18, false, function(err){
-//     if (err) throw err;
-//     console.log('Written to pin');
-//   });
-//   gpio.write(23, false, function(err){
-//     if (err) throw err;
-//     console.log('Written to pin');
-//   })
-// }
-
 
 io.sockets.on('connection', function (socket) {
   connections.push(socket);
@@ -175,9 +71,10 @@ io.sockets.on('connection', function (socket) {
     if(data.module === "lights" && data.values) {
       console.log("light command receive: "+data.values.red+" "+data.values.green+" "+data.values.blue+"\n");
       if (data.relayID === 'Mosfet1') {
-      	arduino.analogWrite(10, data.values.red);
-      	arduino.analogWrite(9, data.values.green);
-		    arduino.analogWrite(11, data.values.blue);
+        blastCommand(data);
+      	// arduino.analogWrite(10, data.values.red);
+      	// arduino.analogWrite(9, data.values.green);
+		    // arduino.analogWrite(11, data.values.blue);
 	  }
       	        //serialPort.write("L"+data.values.red+" "+data.values.green+" "+data.values.blue+"\n");
       //if (data.relayID=== 'Mosfet2') arduino.analogWrite(9, data.values.green);
@@ -185,20 +82,24 @@ io.sockets.on('connection', function (socket) {
 
     } else if ( data.module === "doseCycle" ) {
         if (data.state == true) {
-          arduino.digitalWrite(3, true); // pump on
+          blastCommand(data);
+          // arduino.digitalWrite(3, true); // pump on
           // arduino.digitalWrite(4, false);
         }
         else {
-          arduino.digitalWrite(3, false); // pump off
+          blastCommand(data);
+          // arduino.digitalWrite(3, false); // pump off
           // arduino.digitalWrite(4, false);
         }
 
     } else if (data.module == "doseDirection") {
       if (data.state == true) {
-        arduino.digitalWrite(4, false); //forward
+        blastCommand(data);
+        // arduino.digitalWrite(4, false); //forward
       }
       else {
-        arduino.digitalWrite(4, true); //backward
+        blastCommand(data);
+        // arduino.digitalWrite(4, true); //backward
       }
 
     } else if ( data.module === "thermocycle-off" ) {
@@ -267,3 +168,15 @@ io.sockets.on('connection', function (socket) {
 });
 
 });
+
+function blastCommand(data){
+  if (connections.length) connections.forEach(function(element){
+    element.emit('command', data);
+  });
+}
+
+function blastSensa(data){
+  if (connections.length) connections.forEach(function(element){
+    element.emit('command', data);
+  });
+}

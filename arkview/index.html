@@ -25,12 +25,12 @@
         <img src="/img/ark-reactor.png" style="height: 25px; width: auto; float: left; padding: 12px">
 
         <ul class="nav nav-pills">
-<!--           <li><a class="brand" href="#home" data-toggle="pill"></a></li>-->
-          <li style="padding: 5px" class="active"><a href="#Sensa" data-toggle="pill">Activate!</a></li>
+          <li style="padding: 5px" class="active"><a href="#Dose" data-toggle="pill">Dose</a></li>
           <li style="padding: 5px"><a href="#Light" data-toggle="pill">Light</a></li>
-          <li style="padding: 5px"><a href="#Temp" data-toggle="pill">Temp</a></li>
-          <!-- <li style="padding: 5px"><a href="#Dose" data-toggle="pill">Dose</a></li> -->
-          <!--<li><button type="button" id="sensorNow" class="btn btn-primary">Ark</button></li>-->
+          <li style="padding: 5px"><a href="#Temp" data-toggle="pill">Heat</a></li>
+          <li style="padding: 5px"><a href="#Culture" data-toggle="pill">About</a></li>
+
+          <!-- <li><button type="button" id="sensorNow" class="btn btn-primary">Ark</button></li> -->
        </ul>
      </div>
     </div>
@@ -39,7 +39,12 @@
 
   <div class="tab-content">
 
-  <div class="tab-pane active" id="Sensa">
+  <div class="tab-pane" id="Culture">
+
+    <center>World's first bioreactor</center>
+  </div>
+
+  <div class="tab-pane active" id="Dose">
 
       <div class="well Activate center">
         <h4>Dose!</h4>
@@ -312,7 +317,7 @@
       $(this).tab('show')
     });
 
-     $('#myTab a[href="#Sensa"]').click(function (e) {
+     $('#myTab a[href="#Dose"]').click(function (e) {
       e.preventDefault()
       $(this).tab('show')
     });
@@ -369,7 +374,7 @@
 
     }
 
-    var socket = io.connect('http://192.168.255.100:8088');
+    var socket = io.connect('http://sensa.io:8888');
 
     socket.on('sensor_report', function(data){
       console.log('Sensor Report');
@@ -599,8 +604,8 @@
         change: refreshSwatch
       });
       $( "#red" ).slider( "value", 255 );
-      $( "#green" ).slider( "value", 140 );
-      $( "#blue" ).slider( "value", 60 );
+      $( "#green" ).slider( "value", 200 );
+      $( "#blue" ).slider( "value", 150 );
       $("#red").slider("disable");
       $("#green").slider("disable");
       $("#blue").slider("disable");
